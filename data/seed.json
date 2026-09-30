@@ -1,0 +1,31 @@
+{
+  "0041": {
+    "id": "0041",
+    "model": "e牙狼12 XX-MJ",
+    "source": "P'S CUBE screenshot import",
+    "days": [
+      {"day":0,"big":23,"continuation":16,"maxContinuation":8,"probability":"1/119","start":2736,"lastStart":122,"maxPayout":12620},
+      {"day":1,"big":13,"continuation":7,"maxContinuation":7,"probability":"1/174.1","start":2263,"lastStart":105,"maxPayout":12710},
+      {"day":2,"big":18,"continuation":12,"maxContinuation":11,"probability":"1/149.7","start":2694,"lastStart":212,"maxPayout":17120},
+      {"day":3,"big":6,"continuation":null,"maxContinuation":1,"probability":null,"start":null,"lastStart":null,"maxPayout":4380},
+      {"day":4,"big":19,"continuation":null,"maxContinuation":7,"probability":null,"start":null,"lastStart":null,"maxPayout":13880},
+      {"day":5,"big":50,"continuation":null,"maxContinuation":29,"probability":null,"start":null,"lastStart":null,"maxPayout":54200},
+      {"day":6,"big":17,"continuation":null,"maxContinuation":8,"probability":null,"start":null,"lastStart":null,"maxPayout":12660}
+    ],
+    "todayHits": [
+      {"no":23,"time":"21:30","start":1,"payout":12660,"status":"継続"},
+      {"no":22,"time":"21:29","start":1,"payout":null,"status":"継続"},
+      {"no":21,"time":"21:27","start":1,"payout":null,"status":"継続"},
+      {"no":20,"time":"21:25","start":1,"payout":null,"status":"継続"},
+      {"no":19,"time":"21:24","start":1,"payout":null,"status":"継続"},
+      {"no":18,"time":"21:23","start":1,"payout":null,"status":"継続"},
+      {"no":17,"time":"21:21","start":1,"payout":null,"status":"継続"},
+      {"no":16,"time":"21:20","start":1,"payout":null,"status":"継続"},
+      {"no":15,"time":"21:17","start":224,"payout":null,"status":"初当り"},
+      {"no":14,"time":"20:10","start":363,"payout":290,"status":"初当り"},
+      {"no":13,"time":"18:52","start":1,"payout":2820,"status":"継続"},
+      {"no":12,"time":"18:48","start":993,"payout":null,"status":"初当り"},
+      {"no":11,"time":"14:44","start":1,"payout":9840,"status":"継続"}
+    ]
+  }
+}

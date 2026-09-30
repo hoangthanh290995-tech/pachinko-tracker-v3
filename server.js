@@ -1,7 +1,7 @@
 const http=require('http'),https=require('https'),fs=require('fs');
 const HOST='https://www.pscube.jp';
 const MODEL='e牙狼12 XX-MJ';
-const VERSION='3.9.18';
+const VERSION='3.9.19';
 const PATHS=[
   '/dedamajyoho-P-townDMMpachi/c732920/cgi-bin/nc-v03-001.php?cd_ps=1&bai=0.89',
   `/dedamajyoho-P-townDMMpachi/c732920/cgi-bin/nc-v05-003.php?cd_ps=1&bai=0.89&nmk_kisyu=${encodeURIComponent(MODEL)}`
@@ -11,7 +11,6 @@ const GOOGLE=PATHS.map(p=>'https://www-pscube-jp.translate.goog'+p+'&_x_tr_sl=ja
 const JINA=PATHS.map(p=>'https://r.jina.ai/https://www.pscube.jp'+p);
 const PROXIES=[u=>'https://corsproxy.io/?url='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)];
 const READERS=[...DIRECTS,...GOOGLE,...JINA,...DIRECTS.flatMap(u=>PROXIES.map(p=>p(u)))];
-const TARGET=[];
 
 function fetchText(url,timeout=8000,depth=0){return new Promise((resolve,reject)=>{
   if(depth>5)return reject(Error('Too many redirects'));

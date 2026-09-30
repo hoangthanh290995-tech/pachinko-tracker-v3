@@ -1,41 +1,10 @@
 <!doctype html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#111827">
-  <title>Pachinko Tracker V3</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <main class="app">
-    <header>
-      <div>
-        <div class="eyebrow">PACHINKO TRACKER</div>
-        <h1>V3 Dashboard</h1>
-        <p>Theo dõi máy trên Android</p>
-      </div>
-      <button id="refreshBtn" class="iconBtn" aria-label="Làm mới">↻</button>
-    </header>
-
-    <section class="card source">
-      <div class="label">Nguồn dữ liệu</div>
-      <a id="sourceLink" href="https://www.pscube.jp/dedamajyoho-P-townDMMpachi/c732920/cgi-bin/nc-v03-001.php?cd_ps=1&bai=0.89" target="_blank" rel="noopener">Mở trang P-town DMM Pachi ↗</a>
-      <div class="hint">Dữ liệu tự động sẽ được bổ sung ở bước tiếp theo.</div>
-    </section>
-
-    <section class="stats">
-      <div class="stat"><span>Máy đang theo dõi</span><strong id="machineCount">0</strong></div>
-      <div class="stat"><span>Máy tốt nhất</span><strong id="bestMachine">—</strong></div>
-      <div class="stat"><span>Cập nhật</span><strong id="updatedAt">—</strong></div>
-    </section>
-
-    <section class="card">
-      <div class="sectionHead"><h2>Danh sách máy</h2><button id="addBtn" class="primary">＋ Thêm máy</button></div>
-      <div id="machineList" class="machineList"></div>
-      <div id="empty" class="empty">Chưa có máy. Bấm “Thêm máy” để bắt đầu.</div>
-    </section>
-  </main>
-  <script src="app.js"></script>
-</body>
-</html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111827"><title>Pachinko Tracker V3.2</title><link rel="stylesheet" href="style.css"></head>
+<body><main class="app">
+<header><div><div class="eyebrow">PACHINKO TRACKER</div><h1>V3.2 Analytics</h1><p>Theo dõi & phân tích dữ liệu máy</p></div><button id="refreshBtn" class="iconBtn">↻</button></header>
+<section class="card source"><div class="label">Nguồn dữ liệu</div><a href="https://www.pscube.jp/dedamajyoho-P-townDMMpachi/c732920/cgi-bin/nc-v03-001.php?cd_ps=1&bai=0.89" target="_blank" rel="noopener">P-town DMM Pachi ↗</a><div id="status" class="hint">Sẵn sàng phân tích.</div></section>
+<section class="stats"><div class="stat"><span>Máy</span><strong id="machineCount">0</strong></div><div class="stat"><span>Biến động</span><strong id="trendCount">—</strong></div><div class="stat"><span>Cập nhật</span><strong id="updatedAt">—</strong></div></section>
+<section class="card"><div class="sectionHead"><h2>Phân tích</h2><button id="addBtn" class="primary">＋ Thêm máy</button></div><div id="analysis" class="analysis"></div></section>
+<section class="card"><h2>Lịch sử</h2><div id="history" class="history"></div><div id="empty" class="empty">Chưa có dữ liệu. Bấm ↻ để cập nhật hoặc thêm máy.</div></section>
+</main><script src="app.js"></script></body></html>

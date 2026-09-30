@@ -1,1 +1,33 @@
-const API='https://pachinko-data-api.onrender.com/api/data';const $=id=>document.getElementById(id);let data=[];const esc=s=>String(s??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));function status(t){$('status').textContent=t}function render(){ $('machineCount').textContent=data.length; $('trendCount').textContent='—'; const s=$('machineSelect');s.innerHTML=data.map(x=>`<option>${esc(x.id)}</option>`).join(''); $('analysis').innerHTML=data.map(x=>`<div class="machine"><div><b>${esc(x.id)}</b><small>Dữ liệu P'sCUBE · ${x.values.length} điểm</small><small>Biểu đồ thực tế từ nguồn</small></div><button class="delete" onclick="pick('${esc(x.id)}')">Xem</button></div>`).join('')||'<div class="empty">Không có dữ liệu.</div>';if(data.length)draw(data[0])}window.pick=id=>draw(data.find(x=>x.id===id));$('machineSelect').onchange=e=>draw(data.find(x=>x.id===e.target.value));$('range').onchange=()=>draw(data.find(x=>x.id===$('machineSelect').value));function draw(m){const c=$('chart'),ctx=c.getContext('2d'),w=c.clientWidth||320,h=280;c.width=w*devicePixelRatio;c.height=h*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);ctx.clearRect(0,0,w,h);if(!m||m.values.length<2){$('chartInfo').textContent='Chưa đủ điểm dữ liệu thực tế.';return}const v=m.values,p=30,min=Math.min(...v),max=Math.max(...v),r=Math.max(1,max-min);ctx.beginPath();v.forEach((n,i)=>{const x=p+i*(w-2*p)/Math.max(1,v.length-1),y=h-p-(n-min)/r*(h-2*p);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();$('chartInfo').textContent=`Máy ${m.id} · ${v.length} điểm P'sCUBE · min ${min} · max ${max}`}$('refreshBtn').onclick=load;async function load(){status("Đang lấy dữ liệu thật từ server…");try{const r=await fetch(API+'?t='+Date.now(),{cache:'no-store'});let j=null;try{j=await r.json()}catch{}if(!r.ok)throw Error(j?.error||('HTTP '+r.status));if(!j?.ok||!Array.isArray(j.machines))throw Error(j?.error||'Dữ liệu không hợp lệ');data=j.machines;status(`Đã cập nhật ${data.length} máy · ${new Date(j.updated).toLocaleString('ja-JP')}`);render()}catch(e){status('Không lấy được dữ liệu thật: '+e.message);$('machineCount').textContent='0';$('analysis').innerHTML='<div class="empty">'+esc(e.message)+'</div>'}}load();setInterval(load,600000);
+const API='https://pachinko-data-api.onrender.com/api/data';
+const $=id=>document.getElementById(id);let data=[];
+const esc=s=>String(s??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function status(t){$('status').textContent=t}
+function fmt(n){return n==null?'—':Number(n).toLocaleString('ja-JP')}
+function render(){
+  $('machineCount').textContent=data.length;
+  $('trendCount').textContent=data.filter(x=>x.days?.length).length;
+  $('updatedAt').textContent=new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+  const s=$('machineSelect');s.innerHTML=data.map(x=>`<option value="${esc(x.id)}">${esc(x.id)} · ${esc(x.model||'')}</option>`).join('');
+  $('analysis').innerHTML=data.map(x=>{const d=x.days?.[0];return `<div class="machine"><div><b>台 ${esc(x.id)}</b><small>${esc(x.model||'')} · ${x.days?.length||0}日</small><small>${x.live?'P\'sCUBE取得済み':'スクリーンショット基準データ'}</small></div><div class="machineMetric">本日 ${d?.big??'—'}回<br><span>最大 ${d?.maxPayout!=null?fmt(d.maxPayout):'—'} pt</span></div><button class="delete" onclick="pick('${esc(x.id)}')">見る</button></div>`}).join('')||'<div class="empty">データなし</div>';
+  if(data.length)draw(data[0]);
+}
+window.pick=id=>{const m=data.find(x=>x.id===id);$('machineSelect').value=id;draw(m)};
+$('machineSelect').onchange=e=>draw(data.find(x=>x.id===e.target.value));
+$('range').onchange=()=>draw(data.find(x=>x.id===$('machineSelect').value));
+function draw(m){
+  const c=$('chart'),ctx=c.getContext('2d'),w=c.clientWidth||320,h=300,p=34;
+  c.width=w*devicePixelRatio;c.height=h*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);ctx.clearRect(0,0,w,h);
+  if(!m){$('chartInfo').textContent='';return}
+  const days=(m.days||[]).slice(0,Number($('range').value)||7).reverse();
+  if(days.length<1){$('chartInfo').textContent='日別データがありません。';return}
+  const vals=days.map(d=>Number(d.maxPayout)||0),max=Math.max(...vals,1),min=0;
+  ctx.beginPath();vals.forEach((v,i)=>{const x=p+i*(w-2*p)/Math.max(1,vals.length-1),y=h-p-(v-min)/(max-min)*(h-2*p);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();
+  vals.forEach((v,i)=>{const x=p+i*(w-2*p)/Math.max(1,vals.length-1),y=h-p-(v-min)/(max-min)*(h-2*p);ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();ctx.fillText(`${days[i].day===0?'今日':days[i].day+'日前'}`,Math.max(2,x-18),h-8)});
+  $('chartInfo').textContent=`台 ${m.id} · 日別最大放出数（P'sCUBE） · 最新 ${fmt(vals[vals.length-1])} pt`;
+  const d=m.days?.[0]||{};
+  $('detail').innerHTML=`<div class="detailGrid"><div><span>本日大当り</span><b>${d.big??'—'}</b></div><div><span>継続回数</span><b>${d.continuation??'—'}</b></div><div><span>最大継続</span><b>${d.maxContinuation??'—'}</b></div><div><span>大当り確率</span><b>${esc(d.probability||'—')}</b></div><div><span>累計スタート</span><b>${d.start??'—'}</b></div><div><span>最大放出</span><b>${d.maxPayout!=null?fmt(d.maxPayout):'—'} pt</b></div></div>`;
+  $('hits').innerHTML=(m.todayHits||[]).map(h=>`<tr><td>${h.no}</td><td>${esc(h.time)}</td><td>${h.start??'—'}</td><td>${h.payout==null?'↑':fmt(h.payout)}</td><td>${esc(h.status)}</td></tr>`).join('')||'<tr><td colspan="5">履歴なし</td></tr>';
+}
+$('refreshBtn').onclick=load;
+async function load(){status('P\'sCUBEからデータ取得中…');try{const r=await fetch(API+'?t='+Date.now(),{cache:'no-store'});const j=await r.json();if(!r.ok)throw Error(j.error||('HTTP '+r.status));if(!j.ok||!Array.isArray(j.machines))throw Error(j.error||'データ形式エラー');data=j.machines;status(j.liveOk?`P\'sCUBE接続済み · ${new Date(j.updated).toLocaleString('ja-JP')}`:`基準データ表示 · P\'sCUBE自動取得待ち`);render()}catch(e){status('取得エラー: '+e.message);if(!data.length)$('analysis').innerHTML='<div class="empty">'+esc(e.message)+'</div>'}}
+load();setInterval(load,600000);

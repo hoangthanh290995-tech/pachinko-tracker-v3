@@ -1,0 +1,33 @@
+name: Pachinko live collector
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Call live collector
+        env:
+          API_URL: https://pachinko-data-api.onrender.com/api/data
+        run: |
+          set -e
+          echo "Collecting P'sCUBE data..."
+          curl --fail --silent --show-error --retry 3 --max-time 90 "$API_URL?t=$(date +%s)" -o response.json
+          python - <<'PY'
+          import json
+          with open('response.json', encoding='utf-8') as f:
+              d=json.load(f)
+          print('ok=', d.get('ok'))
+          print('liveOk=', d.get('liveOk'))
+          print('machines=', len(d.get('machines', [])))
+          print('updated=', d.get('updated'))
+          if not d.get('ok'):
+              raise SystemExit('collector API returned ok=false')
+          PY

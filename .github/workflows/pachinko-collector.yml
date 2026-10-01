@@ -6,13 +6,16 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   collect:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Call live collector
         env:
           API_URL: https://pachinko-data-api.onrender.com/api/data
@@ -21,13 +24,56 @@ jobs:
           echo "Collecting P'sCUBE data..."
           curl --fail --silent --show-error --retry 3 --max-time 90 "$API_URL?t=$(date +%s)" -o response.json
           python - <<'PY'
-          import json
+          import json, os
+          from datetime import datetime, timezone
           with open('response.json', encoding='utf-8') as f:
               d=json.load(f)
           print('ok=', d.get('ok'))
           print('liveOk=', d.get('liveOk'))
           print('machines=', len(d.get('machines', [])))
           print('updated=', d.get('updated'))
-          if not d.get('ok'):
-              raise SystemExit('collector API returned ok=false')
+          if not d.get('ok') or not d.get('liveOk'):
+              raise SystemExit('collector did not return live P\'sCUBE data')
+
+          path='data/live-history.json'
+          try:
+              with open(path, encoding='utf-8') as f: store=json.load(f)
+          except Exception:
+              store={'updated':None,'snapshots':[]}
+          snapshots=store.get('snapshots') if isinstance(store.get('snapshots'),list) else []
+          now=datetime.now(timezone.utc).isoformat()
+          stamp=d.get('updated') or now
+
+          for m in d.get('machines',[]):
+              ds=m.get('detailStats') or {}
+              live=m.get('live') or {}
+              snap={
+                'id':str(m.get('id')),
+                'timestamp':stamp,
+                'collectedAt':now,
+                'big':ds.get('big'),
+                'continuation':ds.get('continuation'),
+                'probability':ds.get('probability'),
+                'start':ds.get('start'),
+                'lastStart':ds.get('lastStart'),
+                'maxPayout':ds.get('maxPayout'),
+                'numbers':(m.get('numbers') or live.get('numbers') or [])[:40]
+              }
+              snapshots.append(snap)
+
+          snapshots=snapshots[-20000:]
+          with open(path,'w',encoding='utf-8') as f:
+              json.dump({'updated':stamp,'snapshots':snapshots},f,ensure_ascii=False,separators=(',',':'))
           PY
+
+      - name: Commit snapshot history
+        run: |
+          git config user.name "pachinko-collector[bot]"
+          git config user.email "pachinko-collector[bot]@users.noreply.github.com"
+          git add data/live-history.json
+          if git diff --cached --quiet; then
+            echo "No new snapshot to commit"
+          else
+            git commit -m "Update pachinko live history"
+            git push
+          fi

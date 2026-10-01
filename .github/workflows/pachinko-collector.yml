@@ -21,49 +21,37 @@ jobs:
           API_URL: https://pachinko-data-api.onrender.com/api/data
         run: |
           set -e
-          echo "Collecting P'sCUBE data..."
           curl --fail --silent --show-error --retry 3 --max-time 90 "$API_URL?t=$(date +%s)" -o response.json
           python - <<'PY'
-          import json, os
-          from datetime import datetime, timezone
-          with open('response.json', encoding='utf-8') as f:
-              d=json.load(f)
-          print('ok=', d.get('ok'))
-          print('liveOk=', d.get('liveOk'))
-          print('machines=', len(d.get('machines', [])))
-          print('updated=', d.get('updated'))
-          if not d.get('ok') or not d.get('liveOk'):
-              raise SystemExit('collector did not return live P\'sCUBE data')
+          import json
+          with open('response.json',encoding='utf-8') as f: d=json.load(f)
+          print('ok=',d.get('ok'),'liveOk=',d.get('liveOk'),'machines=',len(d.get('machines',[])))
+          if not d.get('ok') or not d.get('liveOk'): raise SystemExit("No live P'sCUBE data")
+          PY
 
-          path='data/live-history.json'
+      - name: Save live history
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime,timezone
+          with open('response.json',encoding='utf-8') as f: d=json.load(f)
           try:
-              with open(path, encoding='utf-8') as f: store=json.load(f)
-          except Exception:
-              store={'updated':None,'snapshots':[]}
-          snapshots=store.get('snapshots') if isinstance(store.get('snapshots'),list) else []
-          now=datetime.now(timezone.utc).isoformat()
-          stamp=d.get('updated') or now
-
+              with open('data/live-history.json',encoding='utf-8') as f: store=json.load(f)
+          except Exception: store={'updated':None,'snapshots':[]}
+          snaps=store.get('snapshots',[]) if isinstance(store.get('snapshots'),list) else []
+          now=datetime.now(timezone.utc).isoformat(); stamp=d.get('updated') or now
           for m in d.get('machines',[]):
-              ds=m.get('detailStats') or {}
-              live=m.get('live') or {}
-              snap={
-                'id':str(m.get('id')),
-                'timestamp':stamp,
-                'collectedAt':now,
-                'big':ds.get('big'),
-                'continuation':ds.get('continuation'),
-                'probability':ds.get('probability'),
-                'start':ds.get('start'),
-                'lastStart':ds.get('lastStart'),
-                'maxPayout':ds.get('maxPayout'),
+              ds=m.get('detailStats') or {}; live=m.get('live') or {}
+              snaps.append({
+                'id':str(m.get('id')),'timestamp':stamp,'collectedAt':now,
+                'days':(m.get('days') or live.get('days') or [])[:30],
+                'big':ds.get('big'),'continuation':ds.get('continuation'),'probability':ds.get('probability'),
+                'start':ds.get('start'),'lastStart':ds.get('lastStart'),'maxPayout':ds.get('maxPayout'),
+                'graphAssets':(m.get('graphAssets') or live.get('graphAssets') or [])[:20],
                 'numbers':(m.get('numbers') or live.get('numbers') or [])[:40]
-              }
-              snapshots.append(snap)
-
-          snapshots=snapshots[-20000:]
-          with open(path,'w',encoding='utf-8') as f:
-              json.dump({'updated':stamp,'snapshots':snapshots},f,ensure_ascii=False,separators=(',',':'))
+              })
+          with open('data/live-history.json','w',encoding='utf-8') as f:
+              json.dump({'updated':stamp,'snapshots':snaps[-20000:]},f,ensure_ascii=False,separators=(',',':'))
           PY
 
       - name: Commit snapshot history
@@ -71,9 +59,4 @@ jobs:
           git config user.name "pachinko-collector[bot]"
           git config user.email "pachinko-collector[bot]@users.noreply.github.com"
           git add data/live-history.json
-          if git diff --cached --quiet; then
-            echo "No new snapshot to commit"
-          else
-            git commit -m "Update pachinko live history"
-            git push
-          fi
+          if git diff --cached --quiet; then echo "No new snapshot"; else git commit -m "Update pachinko live history"; git push; fi

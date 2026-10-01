@@ -1,7 +1,7 @@
 const http=require('http'),https=require('https'),fs=require('fs');
 const HOST='https://www.pscube.jp';
 const MODEL='e牙狼12 XX-MJ';
-const VERSION='3.9.25';
+const VERSION='3.9.26';
 const PATHS=[
  '/dedamajyoho-P-townDMMpachi/c732920/cgi-bin/nc-v03-001.php?cd_ps=1&bai=0.89',
  `/dedamajyoho-P-townDMMpachi/c732920/cgi-bin/nc-v05-003.php?cd_ps=1&bai=0.89&nmk_kisyu=${encodeURIComponent(MODEL)}`

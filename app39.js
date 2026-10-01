@@ -1,5 +1,5 @@
 const API='https://pachinko-data-api.onrender.com/api/data';
-const HISTORY_KEY='pachinko-tracker-v3919-history-v1';
+const HISTORY_KEY='pachinko-tracker-v3920-history-v1';
 const $=id=>document.getElementById(id);let data=[];
 const esc=s=>String(s??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function status(t){$('status').textContent=t}
@@ -30,6 +30,13 @@ function historyDays(m){
  for(const d of stored){if(!map.has(d.day))map.set(d.day,d)}
  return [...map.values()].slice(0,30);
 }
+function chartValue(d){
+ const payout=d?.maxPayout;
+ if(payout!=null&&payout!=='')return {value:Number(String(payout).replace(/,/g,'')),metric:'最大放出数'};
+ const big=d?.big;
+ if(big!=null&&big!=='')return {value:Number(String(big).replace(/,/g,'')),metric:'大当り回数'};
+ return {value:0,metric:'データなし'};
+}
 function render(){
  $('machineCount').textContent=data.length;$('trendCount').textContent=data.filter(x=>historyDays(x).length>1).length;$('updatedAt').textContent=dataUpdated?new Date(dataUpdated).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}):'—';
  const s=$('machineSelect');s.innerHTML=data.map(x=>`<option value="${esc(x.id)}">${esc(x.id)} · ${esc(x.model||'')}</option>`).join('');
@@ -41,10 +48,10 @@ $('machineSelect').onchange=e=>draw(data.find(x=>x.id===e.target.value));$('rang
 function draw(m){
  const c=$('chart'),ctx=c.getContext('2d'),w=c.clientWidth||320,h=300,p=34;c.width=w*devicePixelRatio;c.height=h*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);ctx.clearRect(0,0,w,h);if(!m){$('chartInfo').textContent='';return}
  const days=historyDays(m).slice(0,Number($('range').value)||7).reverse();if(!days.length){$('chartInfo').textContent='日別データがありません。';return}
- const vals=days.map(d=>Number(d.maxPayout)||0),max=Math.max(...vals,1);
+ const points=days.map(chartValue),vals=points.map(x=>x.value),max=Math.max(...vals,1),metric=[...new Set(points.map(x=>x.metric))].join(' / ');
  ctx.beginPath();vals.forEach((v,i)=>{const x=p+i*(w-2*p)/Math.max(1,vals.length-1),y=h-p-v/max*(h-2*p);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();
  vals.forEach((v,i)=>{const x=p+i*(w-2*p)/Math.max(1,vals.length-1),y=h-p-v/max*(h-2*p);ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();const label=String(days[i].day||'').match(/^\d{4}-\d{2}-\d{2}$/)?days[i].day.slice(5):days[i].day===0?'今日':days[i].day+'日前';ctx.fillText(label,Math.max(2,x-18),h-8)});
- $('chartInfo').textContent=`台 ${m.id} · 日別最大放出数（P'sCUBE記録） · 最新 ${fmt(vals[vals.length-1])} pt · ${days.length}日分`;
+ $('chartInfo').textContent=`台 ${m.id} · ${metric} · 最新 ${fmt(vals[vals.length-1])} · ${days.length}日分`;
  const d=days[0]||{},ls=m.detailStats||{};$('detail').innerHTML=`<div class="detailGrid"><div><span>本日大当り</span><b>${d.big??ls.big??'—'}</b></div><div><span>継続回数</span><b>${d.continuation??ls.continuation??'—'}</b></div><div><span>最大継続</span><b>${d.maxContinuation??ls.maxContinuation??'—'}</b></div><div><span>大当り確率</span><b>${esc(d.probability||ls.probability||'—')}</b></div><div><span>累計スタート</span><b>${d.start??ls.start??'—'}</b></div><div><span>最大放出</span><b>${d.maxPayout!=null?fmt(d.maxPayout):(ls.maxPayout!=null?fmt(ls.maxPayout):'—')} pt</b></div></div>${m.detailUrl?`<p class="hint"><a href="${esc(m.detailUrl)}" target="_blank" rel="noopener">P'sCUBEの台 ${esc(m.id)} 詳細ページを開く ↗</a></p>`:''}`;
  $('hits').innerHTML=(m.todayHits||[]).map(h=>`<tr><td>${h.no}</td><td>${esc(h.time)}</td><td>${h.start??'—'}</td><td>${h.payout==null?'↑':fmt(h.payout)}</td><td>${esc(h.status)}</td></tr>`).join('')||'<tr><td colspan="5">履歴なし</td></tr>';
  const imgs=(m.graphAssets||[]).slice(0,12);$('graphAssets').innerHTML=imgs.length?imgs.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(u)}" alt="P'sCUBE graph"><small>${esc(u.split('/').pop()?.split('?')[0]||'graph')}</small></a>`).join(''):'<div class="hint">P\'sCUBEの実グラフ画像URLをまだ検出できていません。</div>';

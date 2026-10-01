@@ -18,8 +18,10 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
       - name: Build APK
-        run: gradle assembleDebug --no-daemon
+        run: gradle --version && gradle assembleDebug --no-daemon
+      - name: Verify APK
+        run: test -f app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
           name: pachinko-collector-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
